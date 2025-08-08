@@ -1,0 +1,72 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:DSV.ViewModels"
+             xmlns:models="clr-namespace:DSV.Models"
+             x:Class="DSV.Views.CanvasView"
+             x:DataType="vm:CanvasViewModel">
+    <UserControl.DataContext>
+        <vm:CanvasViewModel/>
+    </UserControl.DataContext>
+
+    <ScrollViewer>
+        <!-- <ItemsControl ItemsSource="{Binding Dots}">
+            <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <Canvas Background="Beige" Margin="2"/>
+                </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="models:Dot">
+                    <StackPanel Orientation="Horizontal" Margin="2">
+                    <Ellipse 
+                        Width="{Binding Size}"
+                        Height="{Binding Size}"
+                        Fill="Red"
+                        Canvas.Left="{Binding PositionX}"
+                        Canvas.Top="{Binding PositionY}"
+                        Margin="4"/>
+                        <TextBlock Background="Black" Text="{Binding PositionX}" Margin="2"/>
+                        <TextBlock Background="Black" Text="{Binding PositionY}" Margin="2"/>
+                    </StackPanel>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl> -->
+
+        <!-- <Canvas Background="Beige" Margin="2">
+            <ItemsControl ItemsSource="{Binding Dots}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="models:Dot">
+                        <Ellipse Width="{Binding Size}"
+                                 Height="{Binding Size}"
+                                 Fill="RED"
+                                 Canvas.Left="{Binding PositionX}"
+                                 Canvas.Top="{Binding PositionY}"
+                                 Margin="4"/>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </Canvas> -->
+
+        <ItemsControl ItemsSource="{Binding Dots}">
+            <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <Canvas Background="Beige" Margin="2"/>
+                </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="models:Dot">
+                    <Ellipse Width="{Binding Size}"
+                             Height="{Binding Size}"
+                             Fill="Red"
+                             Margin="4"/>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+            <ItemsControl.Styles>
+                <Style Selector="ContentPresenter" x:DataType="models:Dot">
+                    <Setter Property="Canvas.Left" Value="{Binding PositionX}"/>
+                    <Setter Property="Canvas.Top" Value="{Binding PositionY}"/>
+                </Style>
+            </ItemsControl.Styles>
+        </ItemsControl>
+    </ScrollViewer>
+</UserControl>
