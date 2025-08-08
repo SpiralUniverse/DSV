@@ -50,14 +50,14 @@
         <ItemsControl ItemsSource="{Binding Dots}">
             <ItemsControl.ItemsPanel>
                 <ItemsPanelTemplate>
-                    <Canvas Background="Beige" Margin="2"/>
+                    <Canvas Background="#161217" Margin="2" Name="MainCanvas"/>
                 </ItemsPanelTemplate>
             </ItemsControl.ItemsPanel>
             <ItemsControl.ItemTemplate>
                 <DataTemplate x:DataType="models:Dot">
                     <Ellipse Width="{Binding Size}"
                              Height="{Binding Size}"
-                             Fill="Red"
+                             Fill="#ddb9f7"
                              Margin="4"/>
                 </DataTemplate>
             </ItemsControl.ItemTemplate>

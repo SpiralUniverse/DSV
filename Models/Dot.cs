@@ -1,9 +1,11 @@
+using CommunityToolkit.Mvvm.ComponentModel;
 namespace DSV.Models;
 
-public class Dot
+public partial class Dot : ObservableObject
 {
     public int PositionX { get; set; }
     public int PositionY { get; set; }
 
-    public int Size { get; set; }
+    [ObservableProperty]
+    public int size;
 }
