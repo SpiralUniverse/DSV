@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Windows.Input;
 using Avalonia;
@@ -17,6 +18,7 @@ public class CanvasViewModel : ObservableObject
     public ObservableCollection<Dot> Dots { get; } = new();
 
     private Dot[,] _dotGrid = new Dot[1000, 1000];
+    private List<Dot> _lastFocusedDots = new List<Dot>();
 
     public CanvasViewModel()
     {
@@ -53,28 +55,42 @@ public class CanvasViewModel : ObservableObject
         if (GridSettings == null) return;
 
         var spacing = GridSettings.Spacing;
-        int colCenter = (int)Math.Round(x / spacing);
-        int rowCenter = (int)Math.Round(y / spacing);
-        float radius = 50f; //TODO: Fix this hard coded value
-        float radiusIndex = radius / spacing;
+        float offset = 15f;
 
-        for (int row = Math.Max(0, rowCenter - (int)radiusIndex);
-            row <= Math.Min(GridSettings.Rows - 1, rowCenter + (int)radiusIndex);
-            row++)
+        int snappedX = (int)Math.Round((x - offset) / spacing) * spacing;
+        int snappedY = (int)Math.Round((y - offset) / spacing) * spacing;
+
+        float focusRadius = 50f; // You can tweak this
+
+        float focusRadiusSquared = focusRadius * focusRadius;
+
+        foreach (var dot in _lastFocusedDots)
+            dot.Size = GridSettings.DotSize;
+
+        _lastFocusedDots.Clear();
+
+        // Determine search range in grid coordinates
+        int colMin = Math.Max(0, (snappedX - (int)focusRadius) / spacing);
+        int colMax = Math.Min(GridSettings.Columns - 1, (snappedX + (int)focusRadius) / spacing);
+        int rowMin = Math.Max(0, (snappedY - (int)focusRadius) / spacing);
+        int rowMax = Math.Min(GridSettings.Rows - 1, (snappedY + (int)focusRadius) / spacing);
+
+        for (int row = rowMin; row <= rowMax; row++)
         {
-            for (int col = Math.Max(0, colCenter - (int)radiusIndex);
-                col <= Math.Min(GridSettings.Columns - 1, colCenter + (int)radiusIndex);
-                col++)
+            for (int col = colMin; col <= colMax; col++)
             {
                 var dot = _dotGrid[row, col];
-                int dx = col - colCenter;
-                int dy = row - rowCenter;
 
-                if (dx * dx + dy * dy <= radiusIndex * radiusIndex)
+                int dx = dot.PositionX - snappedX;
+                int dy = dot.PositionY - snappedY;
+
+                if ((dx * dx + dy * dy) <= focusRadiusSquared)
+                {
                     dot.Size = GridSettings.DotSize * 2;
-                else
-                    dot.Size = GridSettings.DotSize; //FIXME: its not resetting the size
+                    _lastFocusedDots.Add(dot);
+                }
             }
         }
     }
+
 }

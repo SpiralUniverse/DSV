@@ -14,5 +14,10 @@
     <Design.DataContext>
         <vm:MainWindowViewModel/>
     </Design.DataContext>
-    <local:CanvasView x:Name="MainCanvasView" />
-</Window>
+        <Border Background="#161217"
+                CornerRadius="20"
+                ClipToBounds="True"
+                Margin="10">
+            <local:CanvasView x:Name="MainCanvasView" />
+        </Border>
+    </Window>

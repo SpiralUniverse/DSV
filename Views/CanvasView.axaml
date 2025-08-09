@@ -50,7 +50,7 @@
         <ItemsControl ItemsSource="{Binding Dots}">
             <ItemsControl.ItemsPanel>
                 <ItemsPanelTemplate>
-                    <Canvas Background="#161217" Margin="2" Name="MainCanvas"/>
+                    <Canvas Background="#161217" Margin="10" Name="MainCanvas"/>
                 </ItemsPanelTemplate>
             </ItemsControl.ItemsPanel>
             <ItemsControl.ItemTemplate>
