@@ -8,4 +8,7 @@ public partial class Dot : ObservableObject
 
     [ObservableProperty]
     public int size;
+
+    [ObservableProperty]
+    public bool isVisible = true;
 }

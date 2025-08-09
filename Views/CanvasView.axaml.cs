@@ -21,10 +21,12 @@ public partial class CanvasView : UserControl
     {
         if (DataContext is CanvasViewModel viewModel)
         {
-            // Update the grid settings based on the new canvas size
-            viewModel.GridSettings.Rows = (int)(e.NewSize.Height / viewModel.GridSettings.Spacing);
-            viewModel.GridSettings.Columns = (int)(e.NewSize.Width / viewModel.GridSettings.Spacing);
-            viewModel.GenerateGrid();
+            viewModel.SetViewport(
+                x: 0,
+                y: 0,
+                width: e.NewSize.Width, 
+                height: e.NewSize.Height
+            );
         }
     }
 
