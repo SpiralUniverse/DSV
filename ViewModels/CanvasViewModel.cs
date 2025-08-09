@@ -12,6 +12,11 @@ public class CanvasViewModel : ObservableObject
     public GridSettings GridSettings { get; set; } = new();
 
 
+    public double PointerX { get; set; }
+    public double PointerY { get; set; }
+    public double FocusRadius { get; set; } = 50;
+
+
     // Only visible dots are in this collection (bound to UI)
     public ObservableCollection<Dot> Dots { get; } = new();
 
@@ -44,8 +49,7 @@ public class CanvasViewModel : ObservableObject
                 {
                     PositionX = col * GridSettings.Spacing,
                     PositionY = row * GridSettings.Spacing,
-                    Size = GridSettings.DotSize,
-                    IsVisible = false // Will be set visible by viewport update
+                    size = GridSettings.DotSize,
                 };
 
                 _dotLookup[(col, row)] = dot;
@@ -69,52 +73,59 @@ public class CanvasViewModel : ObservableObject
             {
                 if (_dotLookup.TryGetValue((col, row), out var dot))
                 {
-                    dot.IsVisible = true;
                     Dots.Add(dot);
                 }
             }
         }
     }
 
-    public void UpdateGridFocus(double mouseX, double mouseY)
+    #region Focused Grid Dots
+    // public void UpdateGridFocus(double mouseX, double mouseY)
+    // {
+    //     float offset = 15f;
+    //     var spacing = GridSettings.Spacing;
+
+    //     int snappedX = (int)Math.Round((mouseX - offset) / spacing) * spacing;
+    //     int snappedY = (int)Math.Round((mouseY - offset) / spacing) * spacing;
+
+    //     float focusRadius = 50f;
+    //     float focusRadiusSquared = focusRadius * focusRadius;
+
+    //     // Reset last focused
+    //     foreach (var dot in _lastFocusedDots)
+    //         dot.Size = GridSettings.DotSize;
+
+    //     _lastFocusedDots.Clear();
+
+    //     int colMin = Math.Max(0, (snappedX - (int)focusRadius) / spacing);
+    //     int colMax = Math.Min((snappedX + (int)focusRadius) / spacing, 199);
+    //     int rowMin = Math.Max(0, (snappedY - (int)focusRadius) / spacing);
+    //     int rowMax = Math.Min((snappedY + (int)focusRadius) / spacing, 199);
+
+    //     for (int row = rowMin; row <= rowMax; row++)
+    //     {
+    //         for (int col = colMin; col <= colMax; col++)
+    //         {
+    //             if (_dotLookup.TryGetValue((col, row), out var dot))
+    //             {
+    //                 int dx = (int)dot.PositionX - snappedX;
+    //                 int dy = (int)dot.PositionY - snappedY;
+
+    //                 if ((dx * dx + dy * dy) <= focusRadiusSquared)
+    //                 {
+    //                     dot.Size = GridSettings.DotSize * 2;
+    //                     _lastFocusedDots.Add(dot);
+    //                 }
+    //             }
+    //         }
+    //     }
+    // }
+    #endregion
+
+    public void UpdatePointer(double x, double y)
     {
-        float offset = 15f;
-        var spacing = GridSettings.Spacing;
-
-        int snappedX = (int)Math.Round((mouseX - offset) / spacing) * spacing;
-        int snappedY = (int)Math.Round((mouseY - offset) / spacing) * spacing;
-
-        float focusRadius = 50f;
-        float focusRadiusSquared = focusRadius * focusRadius;
-
-        // Reset last focused
-        foreach (var dot in _lastFocusedDots)
-            dot.Size = GridSettings.DotSize;
-
-        _lastFocusedDots.Clear();
-
-        int colMin = Math.Max(0, (snappedX - (int)focusRadius) / spacing);
-        int colMax = Math.Min((snappedX + (int)focusRadius) / spacing, 199);
-        int rowMin = Math.Max(0, (snappedY - (int)focusRadius) / spacing);
-        int rowMax = Math.Min((snappedY + (int)focusRadius) / spacing, 199);
-
-        for (int row = rowMin; row <= rowMax; row++)
-        {
-            for (int col = colMin; col <= colMax; col++)
-            {
-                if (_dotLookup.TryGetValue((col, row), out var dot))
-                {
-                    int dx = (int)dot.PositionX - snappedX;
-                    int dy = (int)dot.PositionY - snappedY;
-
-                    if ((dx * dx + dy * dy) <= focusRadiusSquared)
-                    {
-                        dot.Size = GridSettings.DotSize * 2;
-                        _lastFocusedDots.Add(dot);
-                    }
-                }
-            }
-        }
+        PointerX = x;
+        PointerY = y;
     }
 
     public void SetViewport(double x, double y, double width, double height)
@@ -128,18 +139,6 @@ public class CanvasViewModel : ObservableObject
     }
 
 }
-
-
-
-
-// TODO: PERF - Large number of Ellipses (one per dot) causes layout & render lag, especially on resize.
-// SOLUTION: Use a single custom-drawn surface (OnRender) to draw all dots in one pass.
-
-// TODO: PERF - Pointer focus update is slow when moving fast due to per-dot property updates triggering UI re-render.
-// SOLUTION: Batch size updates or draw directly without binding each dot’s Size property.
-
-// TODO: PERF - Resizing grid rebuilds entire ObservableCollection, causing GC pressure & UI rebuild.
-// SOLUTION: Keep fixed-size dot array and recalculate positions, only invalidate visual.
 
 // TODO: FEATURE - Need ability to hide dots under movable objects (e.g., boxes).
 // SOLUTION: In custom draw routine, skip drawing dots within bounding box of the object.

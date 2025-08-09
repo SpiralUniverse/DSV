@@ -4,6 +4,7 @@ using Avalonia.Interactivity;
 using Avalonia;
 using DSV.ViewModels;
 using System;
+using DSV.Controls;
 
 namespace DSV.Views;
 
@@ -13,7 +14,7 @@ public partial class CanvasView : UserControl
     {
         InitializeComponent();
         DataContext = new CanvasViewModel();
-        this.PointerMoved += OnPointerMoved;
+        dotCanvas.PointerMoved += OnPointerMoved;
         this.SizeChanged += OnCanvasSizeChanged;
     }
 
@@ -24,17 +25,23 @@ public partial class CanvasView : UserControl
             viewModel.SetViewport(
                 x: 0,
                 y: 0,
-                width: e.NewSize.Width, 
+                width: e.NewSize.Width,
                 height: e.NewSize.Height
             );
+
+            Console.WriteLine($"Canvas size changed: {e.NewSize.Width}x{e.NewSize.Height}");
         }
     }
 
     private void OnPointerMoved(object? sender, PointerEventArgs e)
     {
-        if (DataContext is CanvasViewModel viewModel)
+        //FIXME: way more laggy than expected
+        if (DataContext is CanvasViewModel viewModel && sender is DotCanvas dotCanvas)
         {
-            viewModel.UpdateGridFocus(e.GetPosition(this).X, e.GetPosition(this).Y);
+            var position = e.GetPosition(this);
+            viewModel.UpdatePointer(position.X, position.Y);
+            dotCanvas.InvalidateVisual();
+            Console.WriteLine($"Pointer moved to: {position}");
         }
     }
 }
