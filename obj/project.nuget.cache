@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "4uGw+dZsmZs=",
+  "dgSpecHash": "i76iEiOA6ck=",
   "success": true,
-  "projectFilePath": "/home/khalid/Coding Projects/C#/DSV/C#.csproj",
+  "projectFilePath": "/home/khalid/Coding Projects/C#/DSV/DSV.csproj",
   "expectedPackageFiles": [
     "/home/khalid/.nuget/packages/avalonia/11.3.3/avalonia.11.3.3.nupkg.sha512",
     "/home/khalid/.nuget/packages/avalonia.angle.windows.natives/2.1.25547.20250602/avalonia.angle.windows.natives.2.1.25547.20250602.nupkg.sha512",

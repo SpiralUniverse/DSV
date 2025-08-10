@@ -11,9 +11,22 @@ public class CanvasViewModel : ObservableObject
 {
     public GridSettings GridSettings { get; set; } = new();
 
+    private double _pointerX;
+    private double _pointerY;
 
-    public double PointerX { get; set; }
-    public double PointerY { get; set; }
+    public double PointerX
+    {
+        get => _pointerX;
+        set => SetProperty(ref _pointerX, value);
+    }
+
+    public double PointerY
+    {
+        get => _pointerY;
+        set => SetProperty(ref _pointerY, value);
+    }
+
+
     public double FocusRadius { get; set; } = 50;
 
 
@@ -26,11 +39,18 @@ public class CanvasViewModel : ObservableObject
     private (double startX, double startY, double width, double height) _viewport = (0, 0, 800, 600);
 
     private List<Dot> _lastFocusedDots = new List<Dot>();
+    private double _lastPointerX = double.NaN;
+    private double _lastPointerY = double.NaN;
+
+    public ObservableCollection<Node> Nodes { get; } = new();
 
     public CanvasViewModel()
     {
         GenerateWorldGrid();
         UpdateVisibleDots();
+
+        Nodes.Add(new Node { Title = "Node 1", PositionX = 100, PositionY = 100, Width = 150, Height = 80 });
+        Nodes.Add(new Node { Title = "Node 2", PositionX = 300, PositionY = 200, Width = 200, Height = 100 });
     }
 
 
@@ -80,52 +100,67 @@ public class CanvasViewModel : ObservableObject
     }
 
     #region Focused Grid Dots
-    // public void UpdateGridFocus(double mouseX, double mouseY)
-    // {
-    //     float offset = 15f;
-    //     var spacing = GridSettings.Spacing;
+    public void UpdateGridFocus(double mouseX, double mouseY)
+    {
+        // Skip if pointer hasn't moved significantly (reduces unnecessary calculations)
+        double threshold = 2.0; // pixels
+        if (Math.Abs(mouseX - _lastPointerX) < threshold && Math.Abs(mouseY - _lastPointerY) < threshold)
+            return;
 
-    //     int snappedX = (int)Math.Round((mouseX - offset) / spacing) * spacing;
-    //     int snappedY = (int)Math.Round((mouseY - offset) / spacing) * spacing;
+        _lastPointerX = mouseX;
+        _lastPointerY = mouseY;
 
-    //     float focusRadius = 50f;
-    //     float focusRadiusSquared = focusRadius * focusRadius;
+        var spacing = GridSettings.Spacing;
 
-    //     // Reset last focused
-    //     foreach (var dot in _lastFocusedDots)
-    //         dot.Size = GridSettings.DotSize;
+        // Calculate grid-aligned focus area
+        int colCenter = (int)Math.Round(mouseX / spacing);
+        int rowCenter = (int)Math.Round(mouseY / spacing);
+        
+        double focusRadius = FocusRadius;
+        double focusRadiusSquared = focusRadius * focusRadius;
 
-    //     _lastFocusedDots.Clear();
+        // Reset last focused dots
+        foreach (var dot in _lastFocusedDots)
+            dot.size = GridSettings.DotSize;
 
-    //     int colMin = Math.Max(0, (snappedX - (int)focusRadius) / spacing);
-    //     int colMax = Math.Min((snappedX + (int)focusRadius) / spacing, 199);
-    //     int rowMin = Math.Max(0, (snappedY - (int)focusRadius) / spacing);
-    //     int rowMax = Math.Min((snappedY + (int)focusRadius) / spacing, 199);
+        _lastFocusedDots.Clear();
 
-    //     for (int row = rowMin; row <= rowMax; row++)
-    //     {
-    //         for (int col = colMin; col <= colMax; col++)
-    //         {
-    //             if (_dotLookup.TryGetValue((col, row), out var dot))
-    //             {
-    //                 int dx = (int)dot.PositionX - snappedX;
-    //                 int dy = (int)dot.PositionY - snappedY;
+        // Calculate efficient search bounds
+        int radiusInCells = (int)Math.Ceiling(focusRadius / spacing);
+        int colMin = Math.Max(0, colCenter - radiusInCells);
+        int colMax = Math.Min(199, colCenter + radiusInCells);
+        int rowMin = Math.Max(0, rowCenter - radiusInCells);
+        int rowMax = Math.Min(199, rowCenter + radiusInCells);
 
-    //                 if ((dx * dx + dy * dy) <= focusRadiusSquared)
-    //                 {
-    //                     dot.Size = GridSettings.DotSize * 2;
-    //                     _lastFocusedDots.Add(dot);
-    //                 }
-    //             }
-    //         }
-    //     }
-    // }
+        // Only check dots in the focus area
+        for (int row = rowMin; row <= rowMax; row++)
+        {
+            for (int col = colMin; col <= colMax; col++)
+            {
+                if (_dotLookup.TryGetValue((col, row), out var dot))
+                {
+                    double dx = dot.PositionX - mouseX;
+                    double dy = dot.PositionY - mouseY;
+                    double distSq = dx * dx + dy * dy;
+
+                    if (distSq <= focusRadiusSquared)
+                    {
+                        dot.size = GridSettings.DotSize * 2;
+                        _lastFocusedDots.Add(dot);
+                    }
+                }
+            }
+        }
+    }
     #endregion
 
     public void UpdatePointer(double x, double y)
     {
         PointerX = x;
         PointerY = y;
+        
+        // Update focus effect using efficient grid lookup
+        UpdateGridFocus(x, y);
     }
 
     public void SetViewport(double x, double y, double width, double height)

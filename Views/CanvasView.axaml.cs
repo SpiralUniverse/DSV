@@ -35,13 +35,12 @@ public partial class CanvasView : UserControl
 
     private void OnPointerMoved(object? sender, PointerEventArgs e)
     {
-        //FIXME: way more laggy than expected
         if (DataContext is CanvasViewModel viewModel && sender is DotCanvas dotCanvas)
         {
             var position = e.GetPosition(this);
             viewModel.UpdatePointer(position.X, position.Y);
             dotCanvas.InvalidateVisual();
-            Console.WriteLine($"Pointer moved to: {position}");
+            // Remove the Console.WriteLine - it's causing severe performance issues
         }
     }
 }

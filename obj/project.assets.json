@@ -1469,9 +1469,9 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "/home/khalid/Coding Projects/C#/DSV/C#.csproj",
-      "projectName": "C#",
-      "projectPath": "/home/khalid/Coding Projects/C#/DSV/C#.csproj",
+      "projectUniqueName": "/home/khalid/Coding Projects/C#/DSV/DSV.csproj",
+      "projectName": "DSV",
+      "projectPath": "/home/khalid/Coding Projects/C#/DSV/DSV.csproj",
       "packagesPath": "/home/khalid/.nuget/packages/",
       "outputPath": "/home/khalid/Coding Projects/C#/DSV/obj/",
       "projectStyle": "PackageReference",

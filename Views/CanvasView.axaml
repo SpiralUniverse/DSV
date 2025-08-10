@@ -3,13 +3,36 @@
              xmlns:vm="clr-namespace:DSV.ViewModels"
              xmlns:models="clr-namespace:DSV.Models"
              xmlns:controls="clr-namespace:DSV.Controls"
+             xmlns:views="clr-namespace:DSV.Views"
              x:Class="DSV.Views.CanvasView"
              x:DataType="vm:CanvasViewModel">
     <UserControl.DataContext>
         <vm:CanvasViewModel/>
     </UserControl.DataContext>
 
-    <ScrollViewer>
+    <Grid>
         <controls:DotCanvas Name="dotCanvas" ViewModel="{Binding}" />
-    </ScrollViewer>
+
+        <ItemsControl ItemsSource="{Binding Nodes}">
+            <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <Canvas/>
+                </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            
+            <!-- This is the key: apply Canvas positioning to the container -->
+            <ItemsControl.Styles>
+                <Style Selector="ItemsControl > ContentPresenter" x:DataType="models:Node">
+                    <Setter Property="Canvas.Left" Value="{Binding PositionX}"/>
+                    <Setter Property="Canvas.Top" Value="{Binding PositionY}"/>
+                </Style>
+            </ItemsControl.Styles>
+            
+            <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="models:Node">
+                    <views:NodeView DataContext="{Binding}"/>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
+    </Grid>
 </UserControl>
