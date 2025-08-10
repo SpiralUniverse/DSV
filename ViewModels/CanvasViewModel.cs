@@ -26,9 +26,7 @@ public class CanvasViewModel : ObservableObject
         set => SetProperty(ref _pointerY, value);
     }
 
-
     public double FocusRadius { get; set; } = 50;
-
 
     // Only visible dots are in this collection (bound to UI)
     public ObservableCollection<Dot> Dots { get; } = new();

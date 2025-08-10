@@ -9,8 +9,12 @@ public partial class NodeView : UserControl
 {
     private bool _isDragging;
     private bool _isResizing;
-    private Point _lastPointerPosition;
     private ResizeMode _resizeMode = ResizeMode.None;
+    
+    // Avalonia Thumb pattern - store initial states
+    private Point _dragStartPosition;
+    private Point _initialNodePosition;
+    private Size _initialNodeSize;
     
     public NodeView()
     {
@@ -44,8 +48,13 @@ public partial class NodeView : UserControl
     {
         if (DataContext is not Node node) return;
         
-        var position = e.GetPosition(this);
-        _lastPointerPosition = position;
+        // Get parent canvas position for proper calculation
+        var canvasPosition = e.GetPosition(this.Parent as Canvas);
+        
+        // Store initial states (Avalonia Thumb pattern)
+        _dragStartPosition = canvasPosition;
+        _initialNodePosition = new Point(node.PositionX, node.PositionY);
+        _initialNodeSize = new Size(node.Width, node.Height);
         
         // Select the node
         node.IsSelected = true;
@@ -56,6 +65,7 @@ public partial class NodeView : UserControl
             _isDragging = true;
             node.IsDragging = true;
             this.Cursor = new Cursor(StandardCursorType.DragMove);
+            e.Pointer.Capture(this);
             e.Handled = true;
         }
     }
@@ -64,23 +74,27 @@ public partial class NodeView : UserControl
     {
         if (DataContext is not Node node) return;
         
-        var currentPosition = e.GetPosition(this);
-        var deltaX = currentPosition.X - _lastPointerPosition.X;
-        var deltaY = currentPosition.Y - _lastPointerPosition.Y;
-
         if (_isDragging)
         {
-            // Move the node
-            node.PositionX += deltaX;
-            node.PositionY += deltaY;
-            _lastPointerPosition = currentPosition;
+            // Avalonia Thumb pattern: calculate delta from initial position
+            var currentPosition = e.GetPosition(this.Parent as Canvas);
+            var deltaX = currentPosition.X - _dragStartPosition.X;
+            var deltaY = currentPosition.Y - _dragStartPosition.Y;
+            
+            // Update position based on initial position + delta (avoids accumulation errors)
+            node.PositionX = _initialNodePosition.X + deltaX;
+            node.PositionY = _initialNodePosition.Y + deltaY;
+            
             e.Handled = true;
         }
         else if (_isResizing)
         {
-            // Resize the node based on resize mode
+            // Resize using delta calculation
+            var currentPosition = e.GetPosition(this.Parent as Canvas);
+            var deltaX = currentPosition.X - _dragStartPosition.X;
+            var deltaY = currentPosition.Y - _dragStartPosition.Y;
+            
             ResizeNode(node, deltaX, deltaY);
-            _lastPointerPosition = currentPosition;
             e.Handled = true;
         }
     }
@@ -114,7 +128,13 @@ public partial class NodeView : UserControl
         _isResizing = true;
         _resizeMode = mode;
         node.IsResizing = true;
-        _lastPointerPosition = e.GetPosition(this);
+        
+        // Store initial state for resize operations
+        var canvasPosition = e.GetPosition(this.Parent as Canvas);
+        _dragStartPosition = canvasPosition;
+        _initialNodePosition = new Point(node.PositionX, node.PositionY);
+        _initialNodeSize = new Size(node.Width, node.Height);
+        
         e.Handled = true;
     }
 
@@ -126,71 +146,81 @@ public partial class NodeView : UserControl
         switch (_resizeMode)
         {
             case ResizeMode.TopLeft:
-                var newWidth = node.Width - deltaX;
-                var newHeight = node.Height - deltaY;
+                var newWidth = _initialNodeSize.Width - deltaX;
+                var newHeight = _initialNodeSize.Height - deltaY;
                 if (newWidth >= minWidth)
                 {
                     node.Width = newWidth;
-                    node.PositionX += deltaX;
+                    node.PositionX = _initialNodePosition.X + deltaX;
                 }
                 if (newHeight >= minHeight)
                 {
                     node.Height = newHeight;
-                    node.PositionY += deltaY;
+                    node.PositionY = _initialNodePosition.Y + deltaY;
                 }
                 break;
                 
             case ResizeMode.TopRight:
-                if (node.Width + deltaX >= minWidth)
-                    node.Width += deltaX;
-                if (node.Height - deltaY >= minHeight)
+                var widthTR = _initialNodeSize.Width + deltaX;
+                var heightTR = _initialNodeSize.Height - deltaY;
+                if (widthTR >= minWidth)
+                    node.Width = widthTR;
+                if (heightTR >= minHeight)
                 {
-                    node.Height -= deltaY;
-                    node.PositionY += deltaY;
+                    node.Height = heightTR;
+                    node.PositionY = _initialNodePosition.Y + deltaY;
                 }
                 break;
                 
             case ResizeMode.BottomLeft:
-                if (node.Width - deltaX >= minWidth)
+                var widthBL = _initialNodeSize.Width - deltaX;
+                var heightBL = _initialNodeSize.Height + deltaY;
+                if (widthBL >= minWidth)
                 {
-                    node.Width -= deltaX;
-                    node.PositionX += deltaX;
+                    node.Width = widthBL;
+                    node.PositionX = _initialNodePosition.X + deltaX;
                 }
-                if (node.Height + deltaY >= minHeight)
-                    node.Height += deltaY;
+                if (heightBL >= minHeight)
+                    node.Height = heightBL;
                 break;
                 
             case ResizeMode.BottomRight:
-                if (node.Width + deltaX >= minWidth)
-                    node.Width += deltaX;
-                if (node.Height + deltaY >= minHeight)
-                    node.Height += deltaY;
+                var widthBR = _initialNodeSize.Width + deltaX;
+                var heightBR = _initialNodeSize.Height + deltaY;
+                if (widthBR >= minWidth)
+                    node.Width = widthBR;
+                if (heightBR >= minHeight)
+                    node.Height = heightBR;
                 break;
                 
             case ResizeMode.Top:
-                if (node.Height - deltaY >= minHeight)
+                var heightT = _initialNodeSize.Height - deltaY;
+                if (heightT >= minHeight)
                 {
-                    node.Height -= deltaY;
-                    node.PositionY += deltaY;
+                    node.Height = heightT;
+                    node.PositionY = _initialNodePosition.Y + deltaY;
                 }
                 break;
                 
             case ResizeMode.Bottom:
-                if (node.Height + deltaY >= minHeight)
-                    node.Height += deltaY;
+                var heightB = _initialNodeSize.Height + deltaY;
+                if (heightB >= minHeight)
+                    node.Height = heightB;
                 break;
                 
             case ResizeMode.Left:
-                if (node.Width - deltaX >= minWidth)
+                var widthL = _initialNodeSize.Width - deltaX;
+                if (widthL >= minWidth)
                 {
-                    node.Width -= deltaX;
-                    node.PositionX += deltaX;
+                    node.Width = widthL;
+                    node.PositionX = _initialNodePosition.X + deltaX;
                 }
                 break;
                 
             case ResizeMode.Right:
-                if (node.Width + deltaX >= minWidth)
-                    node.Width += deltaX;
+                var widthR = _initialNodeSize.Width + deltaX;
+                if (widthR >= minWidth)
+                    node.Width = widthR;
                 break;
         }
     }
