@@ -10,19 +10,38 @@ namespace DSV.Views;
 
 public partial class CanvasView : UserControl
 {
+    private CanvasViewModel? _viewModel;
+
     public CanvasView()
     {
         InitializeComponent();
-        DataContext = new CanvasViewModel();
+        _viewModel = new CanvasViewModel();
+        DataContext = _viewModel;
+        
         dotCanvas.PointerMoved += OnPointerMoved;
         this.SizeChanged += OnCanvasSizeChanged;
+        
+        // Wire up gravity field changes to canvas dirty regions
+        _viewModel.GravityFieldsChanged += OnGravityFieldsChanged;
+        
+        // Set the canvas ViewModel reference for proper binding
+        dotCanvas.ViewModel = _viewModel;
+        
+        // Ensure initial full render by marking all regions dirty
+        dotCanvas.Loaded += (s, e) => dotCanvas.MarkAllRegionsDirty();
+    }
+
+    private void OnGravityFieldsChanged(object? sender, Rect affectedArea)
+    {
+        // Mark the affected area as dirty for surgical updates
+        dotCanvas.MarkRegionsDirty(affectedArea);
     }
 
     private void OnCanvasSizeChanged(object? sender, SizeChangedEventArgs e)
     {
-        if (DataContext is CanvasViewModel viewModel)
+        if (_viewModel != null)
         {
-            viewModel.SetViewport(
+            _viewModel.SetViewport(
                 x: 0,
                 y: 0,
                 width: e.NewSize.Width,
@@ -35,12 +54,13 @@ public partial class CanvasView : UserControl
 
     private void OnPointerMoved(object? sender, PointerEventArgs e)
     {
-        if (DataContext is CanvasViewModel viewModel && sender is DotCanvas dotCanvas)
+        if (_viewModel != null && sender is DotCanvas dotCanvas)
         {
             var position = e.GetPosition(this);
-            viewModel.UpdatePointer(position.X, position.Y);
+            _viewModel.UpdatePointer(position.X, position.Y);
+            
+            // Simple invalidation for now - dirty regions will be optimized later
             dotCanvas.InvalidateVisual();
-            // Remove the Console.WriteLine - it's causing severe performance issues
         }
     }
 }
