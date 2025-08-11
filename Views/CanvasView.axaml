@@ -20,7 +20,6 @@
                 </ItemsPanelTemplate>
             </ItemsControl.ItemsPanel>
             
-            <!-- This is the key: apply Canvas positioning to the container -->
             <ItemsControl.Styles>
                 <Style Selector="ItemsControl > ContentPresenter" x:DataType="models:Node">
                     <Setter Property="Canvas.Left" Value="{Binding PositionX}"/>

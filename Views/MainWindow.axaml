@@ -14,10 +14,21 @@
     <Design.DataContext>
         <vm:MainWindowViewModel/>
     </Design.DataContext>
-        <Border Background="#161217"
-                CornerRadius="20"
-                ClipToBounds="True"
-                Margin="10">
-            <local:CanvasView x:Name="MainCanvasView" />
+        <Grid ColumnDefinitions="*, 0.375*">
+
+            <Border Background="#161217"
+                    CornerRadius="20"
+                    ClipToBounds="True"
+                    Margin="10"
+                    Grid.Column="0">
+                <local:CanvasView x:Name="MainCanvasView" />
         </Border>
+            <Border Background="#1F1B24"
+                    CornerRadius="20"
+                    ClipToBounds="True"
+                    Margin="10"
+                    Grid.Column="1">
+                <TextBlock Text="Settings go here" HorizontalAlignment="Center" />
+            </Border>
+        </Grid>
     </Window>
