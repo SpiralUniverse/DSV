@@ -1,9 +1,15 @@
+using CommunityToolkit.Mvvm.ComponentModel;
+
 namespace DSV.Models;
 
-public class Circle
+public partial class Circle : ObservableObject
 {
-    public int PositionX { get; set; }
-    public int PositionY { get; set; }
-    public int Radius { get; set; }
+    [ObservableProperty]
+    private double _positionX;
 
+    [ObservableProperty]
+    private double _positionY;
+
+    [ObservableProperty]
+    private double _radius = 30;
 }

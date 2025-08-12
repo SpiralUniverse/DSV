@@ -39,6 +39,10 @@ public class CanvasViewModel : ObservableObject
 
     // Field effects management
     public FieldEffectManager FieldEffectManager { get; } = new();
+    
+    // Track field effects by their source shapes for dynamic updates
+    private readonly Dictionary<Node, string> _nodeFieldEffects = new();
+    private readonly Dictionary<Circle, string> _circleFieldEffects = new();
 
     // UI Collections  
     public ObservableCollection<Circle> Circles { get; } = new();
@@ -82,6 +86,12 @@ public class CanvasViewModel : ObservableObject
         };
         FieldEffectManager.AddFieldEffect(waveEffect);
         
+        // Track this field effect for dynamic updates
+        _circleFieldEffects[testCircle] = waveEffect.Id;
+        
+        // Subscribe to circle changes for real-time updates
+        testCircle.PropertyChanged += (s, e) => OnCircleChanged();
+        
         // Add gravity effects for nodes
         AddGravityEffectsForNodes();
         
@@ -98,8 +108,62 @@ public class CanvasViewModel : ObservableObject
 
     private void OnNodeChanged()
     {
+        // Update field effect positions for all nodes
+        UpdateNodeFieldEffects();
+        
+        // Recalculate dot effects with new positions
         UpdateGravityFields();
         OnGravityFieldsChanged();
+    }
+    
+    private void OnCircleChanged()
+    {
+        // Update field effect positions for all circles
+        UpdateCircleFieldEffects();
+        
+        // Recalculate dot effects with new positions
+        UpdateGravityFields();
+        OnGravityFieldsChanged();
+    }
+    
+    /// <summary>
+    /// Update field effect positions when nodes move
+    /// </summary>
+    private void UpdateNodeFieldEffects()
+    {
+        foreach (var kvp in _nodeFieldEffects)
+        {
+            var node = kvp.Key;
+            var effectId = kvp.Value;
+            
+            var fieldEffect = FieldEffectManager.GetFieldEffect(effectId);
+            if (fieldEffect != null)
+            {
+                // Update position and size to match current node
+                fieldEffect.Position = new(node.PositionX, node.PositionY);
+                fieldEffect.Size = new(node.Width, node.Height);
+            }
+        }
+    }
+    
+    /// <summary>
+    /// Update field effect positions when circles move
+    /// </summary>
+    private void UpdateCircleFieldEffects()
+    {
+        foreach (var kvp in _circleFieldEffects)
+        {
+            var circle = kvp.Key;
+            var effectId = kvp.Value;
+            
+            var fieldEffect = FieldEffectManager.GetFieldEffect(effectId);
+            if (fieldEffect != null)
+            {
+                // Update position and size to match current circle
+                fieldEffect.Position = new(circle.PositionX - circle.Radius, circle.PositionY - circle.Radius);
+                fieldEffect.Size = new(circle.Radius * 2, circle.Radius * 2);
+            }
+        }
     }
 
     /// <summary>
@@ -132,6 +196,9 @@ public class CanvasViewModel : ObservableObject
                 Size = new(node.Width, node.Height)
             };
             FieldEffectManager.AddFieldEffect(gravityEffect);
+            
+            // Track this field effect so we can update it when the node moves
+            _nodeFieldEffects[node] = gravityEffect.Id;
         }
     }
 
