@@ -107,6 +107,7 @@ public class DotCanvas : Control
 
     public override void Render(DrawingContext context)
     {
+        var sw = System.Diagnostics.Stopwatch.StartNew();
         base.Render(context);
 
         if (ViewModel?.Dots == null)
@@ -118,7 +119,7 @@ public class DotCanvas : Control
         {
             RenderDot(context, dot);
         }
-        
+
         // Clean all dirty regions after render
         if (_regionsInitialized)
         {
@@ -130,14 +131,16 @@ public class DotCanvas : Control
                 }
             }
         }
-        
+
         _forceFullRender = false;
+        sw.Stop();
+        Console.WriteLine($"Render took {sw.ElapsedMilliseconds} ms");
     }
 
     private void RenderDot(DrawingContext context, Dot dot)
     {
         var brush = DefaultDotBrush;
-        var radius = (dot.size * dot.SizeMultiplier) * 0.5;
+        var radius = dot.size * dot.SizeMultiplier * 0.5;
         
         // Apply gravity field color if present
         if (dot.HasGravityEffect && dot.GravityColor.HasValue)

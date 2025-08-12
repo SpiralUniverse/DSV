@@ -14,22 +14,7 @@ public class CanvasViewModel : ObservableObject
 {
     public GridSettings GridSettings { get; set; } = new();
 
-    private double _pointerX;
-    private double _pointerY;
-
-    public double PointerX
-    {
-        get => _pointerX;
-        set => SetProperty(ref _pointerX, value);
-    }
-
-    public double PointerY
-    {
-        get => _pointerY;
-        set => SetProperty(ref _pointerY, value);
-    }
-
-    public double FocusRadius { get; set; } = 50;
+    // public double FocusRadius { get; set; } = 50;
 
     // Only visible dots are in this collection (bound to UI)
     public ObservableCollection<Dot> Dots { get; } = new();
@@ -52,9 +37,9 @@ public class CanvasViewModel : ObservableObject
 
     private (double startX, double startY, double width, double height) _viewport = (0, 0, 800, 600);
 
-    private List<Dot> _lastFocusedDots = new List<Dot>();
-    private double _lastPointerX = double.NaN;
-    private double _lastPointerY = double.NaN;
+    // private List<Dot> _lastFocusedDots = new List<Dot>();
+    // private double _lastPointerX = double.NaN;
+    // private double _lastPointerY = double.NaN;
 
     // Gravity field tracking
     private List<Dot> _lastGravityAffectedDots = new List<Dot>();
@@ -338,78 +323,75 @@ public class CanvasViewModel : ObservableObject
         }
     }
 
-    #region Focused Grid Dots
-    public void UpdateGridFocus(double mouseX, double mouseY)
-    {
-        // Skip if pointer hasn't moved significantly (reduces unnecessary calculations)
-        double threshold = 2.0; // pixels
-        if (Math.Abs(mouseX - _lastPointerX) < threshold && Math.Abs(mouseY - _lastPointerY) < threshold)
-            return;
+    // #region Focused Grid Dots
+    // public void UpdateGridFocus(double mouseX, double mouseY)
+    // {
+    //     // Skip if pointer hasn't moved significantly (reduces unnecessary calculations)
+    //     double threshold = 2.0; // pixels
+    //     if (Math.Abs(mouseX - _lastPointerX) < threshold && Math.Abs(mouseY - _lastPointerY) < threshold)
+    //         return;
 
-        _lastPointerX = mouseX;
-        _lastPointerY = mouseY;
+    //     _lastPointerX = mouseX;
+    //     _lastPointerY = mouseY;
 
-        var spacing = GridSettings.Spacing;
+    //     var spacing = GridSettings.Spacing;
 
-        // Calculate grid-aligned focus area
-        int colCenter = (int)Math.Round(mouseX / spacing);
-        int rowCenter = (int)Math.Round(mouseY / spacing);
-        
-        double focusRadius = FocusRadius;
-        double focusRadiusSquared = focusRadius * focusRadius;
+    //     // Calculate grid-aligned focus area
+    //     int colCenter = (int)Math.Round(mouseX / spacing);
+    //     int rowCenter = (int)Math.Round(mouseY / spacing);
 
-        // Reset last focused dots
-        foreach (var dot in _lastFocusedDots)
-            dot.size = GridSettings.DotSize;
+    //     double focusRadiusSquared = FocusRadius * FocusRadius;
 
-        _lastFocusedDots.Clear();
+    //     // Reset last focused dots
+    //     foreach (var dot in _lastFocusedDots)
+    //         dot.size = GridSettings.DotSize;
 
-        // Calculate efficient search bounds
-        int radiusInCells = (int)Math.Ceiling(focusRadius / spacing);
-        int colMin = Math.Max(0, colCenter - radiusInCells);
-        int colMax = Math.Min(199, colCenter + radiusInCells);
-        int rowMin = Math.Max(0, rowCenter - radiusInCells);
-        int rowMax = Math.Min(199, rowCenter + radiusInCells);
+    //     _lastFocusedDots.Clear();
 
-        // Only check dots in the focus area
-        for (int row = rowMin; row <= rowMax; row++)
-        {
-            for (int col = colMin; col <= colMax; col++)
-            {
-                if (_dotLookup.TryGetValue((col, row), out var dot))
-                {
-                    double dx = dot.PositionX - mouseX;
-                    double dy = dot.PositionY - mouseY;
-                    double distSq = dx * dx + dy * dy;
+    //     // Calculate efficient search bounds
+    //     int radiusInCells = (int)Math.Ceiling(FocusRadius / spacing);
+    //     int colMin = Math.Max(0, colCenter - radiusInCells);
+    //     int colMax = Math.Min(199, colCenter + radiusInCells);
+    //     int rowMin = Math.Max(0, rowCenter - radiusInCells);
+    //     int rowMax = Math.Min(199, rowCenter + radiusInCells);
 
-                    if (distSq <= focusRadiusSquared)
-                    {
-                        dot.size = GridSettings.DotSize * 2;
-                        _lastFocusedDots.Add(dot);
-                    }
-                }
-            }
-        }
-    }
-    #endregion
+    //     // Only check dots in the focus area
+    //     for (int row = rowMin; row <= rowMax; row++)
+    //     {
+    //         for (int col = colMin; col <= colMax; col++)
+    //         {
+    //             if (_dotLookup.TryGetValue((col, row), out var dot))
+    //             {
+    //                 double dx = dot.PositionX - mouseX;
+    //                 double dy = dot.PositionY - mouseY;
+    //                 double distSq = dx * dx + dy * dy;
+
+    //                 if (distSq <= focusRadiusSquared)
+    //                 {
+    //                     dot.size = GridSettings.DotSize * 2;
+    //                     _lastFocusedDots.Add(dot);
+    //                 }
+    //             }
+    //         }
+    //     }
+    // }
+    // #endregion
 
     public void UpdatePointer(double x, double y)
     {
-        PointerX = x;
-        PointerY = y;
-        
+        // var sw = System.Diagnostics.Stopwatch.StartNew();
         // Update mouse-following circle position with no delay
         if (_mouseFollowingCircle != null)
         {
             _mouseFollowingCircle.PositionX = x;
             _mouseFollowingCircle.PositionY = y;
-            
+
             // Check if mouse is hovering over any nodes
             bool isHoveringOverNode = IsMouseOverAnyNode(x, y);
-            
+
             // TODO: Circle radius - currently using default size (Width: 30, Height: 30)
             // To adjust circle effect radius, modify _mouseFollowingCircle.Width and Height
-            
+
             // Hide circle effect when hovering over nodes
             if (isHoveringOverNode)
             {
@@ -447,9 +429,11 @@ public class CanvasViewModel : ObservableObject
                 }
             }
         }
-        
+
         // Update focus effect using efficient grid lookup
-        UpdateGridFocus(x, y);
+        // UpdateGridFocus(x, y);
+        // sw.Stop();
+        // Console.WriteLine($"UpdatePointer took {sw.ElapsedMilliseconds} ms");
     }
     
     /// <summary>
@@ -482,9 +466,3 @@ public class CanvasViewModel : ObservableObject
     }
 
 }
-
-// TODO: FEATURE - Need ability to hide dots under movable objects (e.g., boxes).
-// SOLUTION: In custom draw routine, skip drawing dots within bounding box of the object.
-
-// TODO: DESIGN - Mixing thousands of dot UI elements with other controls will hurt performance.
-// SOLUTION: Layer approach — bottom layer for dot drawing, top layer for interactive controls.

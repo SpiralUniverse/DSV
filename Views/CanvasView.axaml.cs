@@ -58,9 +58,10 @@ public partial class CanvasView : UserControl
         {
             var position = e.GetPosition(this);
             _viewModel.UpdatePointer(position.X, position.Y);
-            
+
             // Simple invalidation for now - dirty regions will be optimized later
             dotCanvas.InvalidateVisual();
+            
         }
     }
 }

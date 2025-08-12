@@ -1,0 +1,5 @@
+/home/khalid/Coding Projects/C#/DSV/bin/Release/net9.0/win-x64/publish/DSV.pdb
+/home/khalid/Coding Projects/C#/DSV/bin/Release/net9.0/win-x64/publish/av_libglesv2.dll
+/home/khalid/Coding Projects/C#/DSV/bin/Release/net9.0/win-x64/publish/libHarfBuzzSharp.dll
+/home/khalid/Coding Projects/C#/DSV/bin/Release/net9.0/win-x64/publish/libSkiaSharp.dll
+/home/khalid/Coding Projects/C#/DSV/bin/Release/net9.0/win-x64/publish/DSV.exe
