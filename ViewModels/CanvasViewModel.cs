@@ -46,6 +46,9 @@ public class CanvasViewModel : ObservableObject
 
     // UI Collections  
     public ObservableCollection<Circle> Circles { get; } = new();
+    
+    // Mouse-following circle for dynamic effects
+    private Circle? _mouseFollowingCircle;
 
     private (double startX, double startY, double width, double height) _viewport = (0, 0, 800, 600);
 
@@ -69,28 +72,45 @@ public class CanvasViewModel : ObservableObject
         Nodes.Add(node1);
         Nodes.Add(node2);
         
-        // Add test circle with wave effect
-        var testCircle = new Circle { PositionX = 500, PositionY = 150, Radius = 60 };
-        Circles.Add(testCircle);
+        // Add mouse-following circle with combined wave + magnification effects
+        // TODO: Change circle radius here for effect area (currently 60)
+        var mouseCircle = new Circle { PositionX = 400, PositionY = 300, Radius = 60 };
+        Circles.Add(mouseCircle);
         
-        // Create wave field effect for the circle
-        var waveEffect = new WaveFieldEffect
+        // Create composite effect: Wave + Magnification
+        var compositeEffect = new CompositeFieldEffect
         {
-            Position = new(testCircle.PositionX - testCircle.Radius, testCircle.PositionY - testCircle.Radius),
-            Size = new(testCircle.Radius * 2, testCircle.Radius * 2),
+            Position = new(mouseCircle.PositionX - mouseCircle.Radius, mouseCircle.PositionY - mouseCircle.Radius),
+            Size = new(mouseCircle.Radius * 2, mouseCircle.Radius * 2),
             MaxDistance = 4.0,
+            Strength = 1.0
+        };
+        
+        // Add wave behavior
+        compositeEffect.Behaviors.Add(new WaveBehavior 
+        { 
             Frequency = 2.5,
             Amplitude = 1.2,
             WaveSpeed = 3.0,
             FadeWithDistance = true
-        };
-        FieldEffectManager.AddFieldEffect(waveEffect);
+        });
+        
+        // Add magnification behavior (2x dot size)
+        compositeEffect.Behaviors.Add(new MagnificationBehavior 
+        { 
+            MagnificationMultiplier = 2.0 
+        });
+        
+        FieldEffectManager.AddFieldEffect(compositeEffect);
         
         // Track this field effect for dynamic updates
-        _circleFieldEffects[testCircle] = waveEffect.Id;
+        _circleFieldEffects[mouseCircle] = compositeEffect.Id;
         
         // Subscribe to circle changes for real-time updates
-        testCircle.PropertyChanged += (s, e) => OnCircleChanged();
+        mouseCircle.PropertyChanged += (s, e) => OnCircleChanged();
+        
+        // Store reference for mouse following
+        _mouseFollowingCircle = mouseCircle;
         
         // Add gravity effects for nodes
         AddGravityEffectsForNodes();
@@ -378,8 +398,77 @@ public class CanvasViewModel : ObservableObject
         PointerX = x;
         PointerY = y;
         
+        // Update mouse-following circle position with no delay
+        if (_mouseFollowingCircle != null)
+        {
+            _mouseFollowingCircle.PositionX = x;
+            _mouseFollowingCircle.PositionY = y;
+            
+            // Check if mouse is hovering over any nodes
+            bool isHoveringOverNode = IsMouseOverAnyNode(x, y);
+            
+            // TODO: Circle radius - currently using default size (Width: 30, Height: 30)
+            // To adjust circle effect radius, modify _mouseFollowingCircle.Width and Height
+            
+            // Hide circle effect when hovering over nodes
+            if (isHoveringOverNode)
+            {
+                // Remove circle field effect temporarily
+                if (_circleFieldEffects.ContainsKey(_mouseFollowingCircle))
+                {
+                    var effectId = _circleFieldEffects[_mouseFollowingCircle];
+                    FieldEffectManager.RemoveFieldEffect(effectId);
+                    _circleFieldEffects.Remove(_mouseFollowingCircle);
+                }
+            }
+            else
+            {
+                // Restore circle field effect if not already present
+                if (!_circleFieldEffects.ContainsKey(_mouseFollowingCircle))
+                {
+                    var compositeEffect = new CompositeFieldEffect
+                    {
+                        Position = new(_mouseFollowingCircle.PositionX, _mouseFollowingCircle.PositionY),
+                        Size = new(_mouseFollowingCircle.Width, _mouseFollowingCircle.Height),
+                        Behaviors = { new WaveBehavior(), new MagnificationBehavior() }
+                    };
+                    FieldEffectManager.AddFieldEffect(compositeEffect);
+                    _circleFieldEffects[_mouseFollowingCircle] = compositeEffect.Id;
+                }
+                else
+                {
+                    // Update existing effect position
+                    var effectId = _circleFieldEffects[_mouseFollowingCircle];
+                    var effect = FieldEffectManager.GetFieldEffect(effectId) as CompositeFieldEffect;
+                    if (effect != null)
+                    {
+                        effect.Position = new(_mouseFollowingCircle.PositionX, _mouseFollowingCircle.PositionY);
+                    }
+                }
+            }
+        }
+        
         // Update focus effect using efficient grid lookup
         UpdateGridFocus(x, y);
+    }
+    
+    /// <summary>
+    /// Check if the mouse position is over any node
+    /// </summary>
+    private bool IsMouseOverAnyNode(double mouseX, double mouseY)
+    {
+        foreach (var node in Nodes)
+        {
+            // Check if mouse is within node bounds
+            if (mouseX >= node.PositionX && 
+                mouseX <= node.PositionX + node.Width &&
+                mouseY >= node.PositionY && 
+                mouseY <= node.PositionY + node.Height)
+            {
+                return true;
+            }
+        }
+        return false;
     }
 
     public void SetViewport(double x, double y, double width, double height)
