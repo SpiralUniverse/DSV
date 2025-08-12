@@ -5,6 +5,7 @@ using System.Linq;
 using Avalonia;
 using CommunityToolkit.Mvvm.ComponentModel;
 using DSV.Models;
+using DSV.Models.FieldEffects;
 
 
 namespace DSV.ViewModels;
@@ -36,6 +37,12 @@ public class CanvasViewModel : ObservableObject
     // All dots in the world grid
     private readonly Dictionary<(int col, int row), Dot> _dotLookup = new();
 
+    // Field effects management
+    public FieldEffectManager FieldEffectManager { get; } = new();
+
+    // UI Collections  
+    public ObservableCollection<Circle> Circles { get; } = new();
+
     private (double startX, double startY, double width, double height) _viewport = (0, 0, 800, 600);
 
     private List<Dot> _lastFocusedDots = new List<Dot>();
@@ -57,6 +64,29 @@ public class CanvasViewModel : ObservableObject
         
         Nodes.Add(node1);
         Nodes.Add(node2);
+        
+        // Add test circle with wave effect
+        var testCircle = new Circle { PositionX = 500, PositionY = 150, Radius = 60 };
+        Circles.Add(testCircle);
+        
+        // Create wave field effect for the circle
+        var waveEffect = new WaveFieldEffect
+        {
+            Position = new(testCircle.PositionX - testCircle.Radius, testCircle.PositionY - testCircle.Radius),
+            Size = new(testCircle.Radius * 2, testCircle.Radius * 2),
+            MaxDistance = 4.0,
+            Frequency = 2.5,
+            Amplitude = 1.2,
+            WaveSpeed = 3.0,
+            FadeWithDistance = true
+        };
+        FieldEffectManager.AddFieldEffect(waveEffect);
+        
+        // Add gravity effects for nodes
+        AddGravityEffectsForNodes();
+        
+        // Subscribe to field effect changes
+        FieldEffectManager.FieldEffectsChanged += (sender, affectedArea) => OnGravityFieldsChanged(affectedArea);
         
         // Subscribe to node changes for real-time gravity updates
         node1.PropertyChanged += (s, e) => OnNodeChanged();
@@ -81,11 +111,34 @@ public class CanvasViewModel : ObservableObject
     {
         // Calculate combined affected area for dirty regions
         var affectedArea = CalculateGravityAffectedArea();
+        OnGravityFieldsChanged(affectedArea);
+    }
+    
+    private void OnGravityFieldsChanged(Rect affectedArea)
+    {
         GravityFieldsChanged?.Invoke(this, affectedArea);
+    }
+    
+    /// <summary>
+    /// Add gravity field effects for all current nodes
+    /// </summary>
+    private void AddGravityEffectsForNodes()
+    {
+        foreach (var node in Nodes)
+        {
+            var gravityEffect = new GravityFieldEffect
+            {
+                Position = new(node.PositionX, node.PositionY),
+                Size = new(node.Width, node.Height)
+            };
+            FieldEffectManager.AddFieldEffect(gravityEffect);
+        }
     }
 
     /// <summary>
     /// Update gravity field effects on all dots based on current node positions
+    /// <summary>
+    /// Update field effects on all dots using the unified field effects system
     /// </summary>
     private void UpdateGravityFields()
     {
@@ -96,25 +149,26 @@ public class CanvasViewModel : ObservableObject
         }
         _lastGravityAffectedDots.Clear();
 
-        // Apply gravity effects from all nodes
-        foreach (var node in Nodes)
-        {
-            var nodeRect = new Rect(node.PositionX, node.PositionY, node.Width, node.Height);
-            ApplyNodeGravityField(nodeRect);
-        }
+        // Update field effect manager with current time (for animations)
+        FieldEffectManager.Update(0.016); // ~60fps
+
+        // Get combined affected area from all field effects
+        var combinedBounds = FieldEffectManager.GetCombinedAffectedBounds(GridSettings.Spacing);
+        
+        if (combinedBounds.Width <= 0 || combinedBounds.Height <= 0)
+            return;
+
+        // Apply field effects to dots in the affected area
+        ApplyFieldEffectsToArea(combinedBounds);
     }
 
-    private void ApplyNodeGravityField(Rect nodeRect)
+    private void ApplyFieldEffectsToArea(Rect affectedArea)
     {
-        // Calculate affected area in grid coordinates
-        var maxDistance = GravityField.MAX_FIELD_DISTANCE * GridSettings.Spacing;
-        var searchArea = nodeRect.Inflate(maxDistance);
-        
-        // Get grid bounds for the search area
-        int colMin = Math.Max(0, (int)(searchArea.Left / GridSettings.Spacing));
-        int colMax = Math.Min(199, (int)(searchArea.Right / GridSettings.Spacing));
-        int rowMin = Math.Max(0, (int)(searchArea.Top / GridSettings.Spacing));
-        int rowMax = Math.Min(199, (int)(searchArea.Bottom / GridSettings.Spacing));
+        // Get grid bounds for the affected area
+        int colMin = Math.Max(0, (int)(affectedArea.Left / GridSettings.Spacing));
+        int colMax = Math.Min(199, (int)(affectedArea.Right / GridSettings.Spacing));
+        int rowMin = Math.Max(0, (int)(affectedArea.Top / GridSettings.Spacing));
+        int rowMax = Math.Min(199, (int)(affectedArea.Bottom / GridSettings.Spacing));
 
         // Check each dot in the affected area
         for (int row = rowMin; row <= rowMax; row++)
@@ -123,15 +177,22 @@ public class CanvasViewModel : ObservableObject
             {
                 if (_dotLookup.TryGetValue((col, row), out var dot))
                 {
-                    var effect = GravityField.CalculateEffect(
+                    // Calculate combined effect from all field sources
+                    var combinedEffect = FieldEffectManager.CalculateCombinedEffect(
                         dot.OriginalPosition, 
-                        nodeRect, 
                         GridSettings.Spacing
                     );
-                    
-                    if (effect.HasEffect)
+
+                    if (combinedEffect.HasAnyEffect)
                     {
-                        dot.ApplyGravityEffect(effect);
+                        // Apply combined effects to the dot
+                        var newPosition = dot.OriginalPosition + combinedEffect.TotalDisplacement;
+                        dot.VisualPosition = newPosition;
+                        dot.SizeMultiplier = combinedEffect.TotalSizeMultiplier;
+                        dot.GravityColor = combinedEffect.FinalColor;
+                        dot.HasGravityEffect = true;
+                        dot.GravityRing = combinedEffect.HighestRing;
+                        
                         _lastGravityAffectedDots.Add(dot);
                     }
                 }
@@ -141,20 +202,8 @@ public class CanvasViewModel : ObservableObject
 
     private Rect CalculateGravityAffectedArea()
     {
-        if (!Nodes.Any()) return new Rect();
-        
-        var combinedRect = new Rect(Nodes.First().PositionX, Nodes.First().PositionY, 
-                                   Nodes.First().Width, Nodes.First().Height);
-        
-        foreach (var node in Nodes.Skip(1))
-        {
-            var nodeRect = new Rect(node.PositionX, node.PositionY, node.Width, node.Height);
-            combinedRect = combinedRect.Union(nodeRect);
-        }
-        
-        // Expand by maximum gravity field distance
-        var maxDistance = GravityField.MAX_FIELD_DISTANCE * GridSettings.Spacing;
-        return combinedRect.Inflate(maxDistance);
+        // Use the field effect manager to get the combined affected bounds
+        return FieldEffectManager.GetCombinedAffectedBounds(GridSettings.Spacing);
     }
 
 

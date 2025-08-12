@@ -12,7 +12,7 @@ public partial class Dot
     /// <summary>
     /// Original position of the dot in the grid (before gravity displacement)
     /// </summary>
-    public Point OriginalPosition => new Point(PositionX, PositionY);
+    public Point OriginalPosition => new(PositionX, PositionY);
     
     /// <summary>
     /// Current visual position after gravity field displacement

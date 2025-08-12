@@ -15,7 +15,7 @@ public partial class CanvasView : UserControl
     public CanvasView()
     {
         InitializeComponent();
-        _viewModel = new CanvasViewModel();
+        _viewModel = new();
         DataContext = _viewModel;
         
         dotCanvas.PointerMoved += OnPointerMoved;

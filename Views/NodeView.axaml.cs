@@ -53,8 +53,8 @@ public partial class NodeView : UserControl
         
         // Store initial states (Avalonia Thumb pattern)
         _dragStartPosition = canvasPosition;
-        _initialNodePosition = new Point(node.PositionX, node.PositionY);
-        _initialNodeSize = new Size(node.Width, node.Height);
+        _initialNodePosition = new(node.PositionX, node.PositionY);
+        _initialNodeSize = new(node.Width, node.Height);
         
         // Select the node
         node.IsSelected = true;
@@ -132,8 +132,8 @@ public partial class NodeView : UserControl
         // Store initial state for resize operations
         var canvasPosition = e.GetPosition(this.Parent as Canvas);
         _dragStartPosition = canvasPosition;
-        _initialNodePosition = new Point(node.PositionX, node.PositionY);
-        _initialNodeSize = new Size(node.Width, node.Height);
+        _initialNodePosition = new(node.PositionX, node.PositionY);
+        _initialNodeSize = new(node.Width, node.Height);
         
         e.Handled = true;
     }

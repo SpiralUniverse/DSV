@@ -47,7 +47,7 @@ public static class GravityField
         
         if (normalizedDistance > MAX_FIELD_DISTANCE)
         {
-            return new GravityEffect { HasEffect = false };
+            return new() { HasEffect = false };
         }
         
         // Determine which ring the dot is in
@@ -109,7 +109,7 @@ public static class GravityField
     {
         var x = Math.Max(rect.Left, Math.Min(point.X, rect.Right));
         var y = Math.Max(rect.Top, Math.Min(point.Y, rect.Bottom));
-        return new Point(x, y);
+        return new(x, y);
     }
 }
 
