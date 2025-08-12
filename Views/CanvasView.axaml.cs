@@ -5,6 +5,7 @@ using Avalonia;
 using DSV.ViewModels;
 using System;
 using DSV.Controls;
+using DSV.Services;
 
 namespace DSV.Views;
 
@@ -15,10 +16,11 @@ public partial class CanvasView : UserControl
     public CanvasView()
     {
         InitializeComponent();
+        
         _viewModel = new();
         DataContext = _viewModel;
         
-        dotCanvas.PointerMoved += OnPointerMoved;
+        // dotCanvas.PointerMoved += OnPointerMoved;
         this.SizeChanged += OnCanvasSizeChanged;
         
         // Wire up gravity field changes to canvas dirty regions
@@ -54,14 +56,20 @@ public partial class CanvasView : UserControl
 
     private void OnPointerMoved(object? sender, PointerEventArgs e)
     {
-        if (_viewModel != null && sender is DotCanvas dotCanvas)
+        if (_viewModel == null) return;
+        if(sender is Panel { Name: "PanelLayer" })
         {
             var position = e.GetPosition(this);
+        
+            // Calculate movement bounds for optimized invalidation
+            var movementBounds = _viewModel.GetMouseMovementBounds(position.X, position.Y);
+        
             _viewModel.UpdatePointer(position.X, position.Y);
-
-            // Simple invalidation for now - dirty regions will be optimized later
-            dotCanvas.InvalidateVisual();
-            
+        
+            // Optimized invalidation - only redraw affected area instead of entire canvas
+            dotCanvas.InvalidateRect(movementBounds);
+        
         }
     }
+
 }

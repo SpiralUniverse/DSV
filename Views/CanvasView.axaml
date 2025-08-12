@@ -12,7 +12,7 @@
 
     <Grid>
         <controls:DotCanvas Name="dotCanvas" ViewModel="{Binding}" />
-
+        <Panel Name="PanelLayer" Background="Transparent" PointerMoved="OnPointerMoved"/>
         <ItemsControl ItemsSource="{Binding Nodes}">
             <ItemsControl.ItemsPanel>
                 <ItemsPanelTemplate>

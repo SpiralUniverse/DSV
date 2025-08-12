@@ -3,8 +3,10 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using Avalonia;
+using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using DSV.Models;
+using DSV.Services;
 using DSV.Models.FieldEffects;
 
 
@@ -18,6 +20,8 @@ public class CanvasViewModel : ObservableObject
 
     // Only visible dots are in this collection (bound to UI)
     public ObservableCollection<Dot> Dots { get; } = new();
+
+    private readonly DispatcherTimer _timer;
 
     // All dots in the world grid
     private readonly Dictionary<(int col, int row), Dot> _dotLookup = new();
@@ -40,6 +44,11 @@ public class CanvasViewModel : ObservableObject
     // private List<Dot> _lastFocusedDots = new List<Dot>();
     // private double _lastPointerX = double.NaN;
     // private double _lastPointerY = double.NaN;
+
+    // Track last mouse position for movement optimization
+    private double _lastMouseX;
+    private double _lastMouseY;
+    private bool _hasLastMousePosition = false;
 
     // Gravity field tracking
     private List<Dot> _lastGravityAffectedDots = new List<Dot>();
@@ -110,6 +119,7 @@ public class CanvasViewModel : ObservableObject
         // Initial gravity calculation
         UpdateGravityFields();
     }
+
 
     private void OnNodeChanged()
     {
@@ -380,6 +390,11 @@ public class CanvasViewModel : ObservableObject
     public void UpdatePointer(double x, double y)
     {
         // var sw = System.Diagnostics.Stopwatch.StartNew();
+        
+        // Store current position for movement bounds calculation
+        var oldX = _hasLastMousePosition ? _lastMouseX : x;
+        var oldY = _hasLastMousePosition ? _lastMouseY : y;
+        
         // Update mouse-following circle position with no delay
         if (_mouseFollowingCircle != null)
         {
@@ -434,6 +449,11 @@ public class CanvasViewModel : ObservableObject
         // UpdateGridFocus(x, y);
         // sw.Stop();
         // Console.WriteLine($"UpdatePointer took {sw.ElapsedMilliseconds} ms");
+        
+        // Track last mouse position for next movement optimization
+        _lastMouseX = x;
+        _lastMouseY = y;
+        _hasLastMousePosition = true;
     }
     
     /// <summary>
@@ -453,6 +473,75 @@ public class CanvasViewModel : ObservableObject
             }
         }
         return false;
+    }
+
+    /// <summary>
+    /// Get the bounds of the mouse circle effect for optimized invalidation
+    /// </summary>
+    public Rect GetMouseEffectBounds(double mouseX, double mouseY)
+    {
+        if (_mouseFollowingCircle == null) return new Rect();
+        
+        var radius = _mouseFollowingCircle.Radius;
+        var effectRadius = radius * 4.0; // MaxDistance from CompositeFieldEffect
+        
+        return new Rect(
+            mouseX - effectRadius,
+            mouseY - effectRadius,
+            effectRadius * 2,
+            effectRadius * 2
+        );
+    }
+    
+    /// <summary>
+    /// Get the movement region for mouse circle optimization
+    /// Only invalidates the area between old and new positions
+    /// Returns current position bounds if no last position available
+    /// </summary>
+    public Rect GetMouseMovementBounds(double newX, double newY)
+    {
+        if (!_hasLastMousePosition)
+        {
+            // No previous position, return current bounds
+            return GetMouseEffectBounds(newX, newY);
+        }
+        
+        return GetMouseMovementBounds(_lastMouseX, _lastMouseY, newX, newY);
+    }
+    
+    /// <summary>
+    /// Get the movement region for mouse circle optimization
+    /// Only invalidates the area between old and new positions
+    /// </summary>
+    public Rect GetMouseMovementBounds(double oldX, double oldY, double newX, double newY)
+    {
+        if (_mouseFollowingCircle == null) return new Rect();
+        
+        var radius = _mouseFollowingCircle.Radius;
+        var effectRadius = radius * 4.0; // MaxDistance from CompositeFieldEffect
+        
+        // Calculate minimal bounding box that encompasses both circles
+        var minX = Math.Min(oldX - effectRadius, newX - effectRadius);
+        var minY = Math.Min(oldY - effectRadius, newY - effectRadius);
+        var maxX = Math.Max(oldX + effectRadius, newX + effectRadius);
+        var maxY = Math.Max(oldY + effectRadius, newY + effectRadius);
+        
+        return new Rect(minX, minY, maxX - minX, maxY - minY);
+    }
+    
+    /// <summary>
+    /// Get the bounds for a node's field effect
+    /// </summary>
+    public Rect GetNodeEffectBounds(Node node)
+    {
+        var effectRadius = 3.0 * GridSettings.Spacing; // MaxDistance * spacing
+        
+        return new Rect(
+            node.PositionX - effectRadius,
+            node.PositionY - effectRadius,
+            node.Width + (effectRadius * 2),
+            node.Height + (effectRadius * 2)
+        );
     }
 
     public void SetViewport(double x, double y, double width, double height)

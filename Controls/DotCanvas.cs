@@ -86,6 +86,15 @@ public class DotCanvas : Control
     }
 
     /// <summary>
+    /// Invalidate only a specific rectangular region
+    /// More efficient than InvalidateVisual() for localized changes
+    /// </summary>
+    public void InvalidateRect(Rect rect)
+    {
+        MarkRegionsDirty(rect);
+    }
+
+    /// <summary>
     /// Mark all regions dirty (full redraw)
     /// </summary>
     public void MarkAllRegionsDirty()
@@ -107,17 +116,25 @@ public class DotCanvas : Control
 
     public override void Render(DrawingContext context)
     {
-        var sw = System.Diagnostics.Stopwatch.StartNew();
+        // var sw = System.Diagnostics.Stopwatch.StartNew();
         base.Render(context);
 
         if (ViewModel?.Dots == null)
             return;
 
-        // Always render all visible dots for now to avoid disappearing issues
-        // TODO: Optimize with proper dirty region implementation later
-        foreach (var dot in ViewModel.Dots)
+        // Optimized dirty region rendering
+        if (_regionsInitialized && !_forceFullRender)
         {
-            RenderDot(context, dot);
+            // Only render dots in dirty regions for maximum performance
+            RenderDotsInDirtyRegions(context);
+        }
+        else
+        {
+            // Fallback: render all visible dots (initial load or error recovery)
+            foreach (var dot in ViewModel.Dots)
+            {
+                RenderDot(context, dot);
+            }
         }
 
         // Clean all dirty regions after render
@@ -133,8 +150,50 @@ public class DotCanvas : Control
         }
 
         _forceFullRender = false;
-        sw.Stop();
-        Console.WriteLine($"Render took {sw.ElapsedMilliseconds} ms");
+        // sw.Stop();
+        // Console.WriteLine($"Render took {sw.ElapsedMilliseconds} ms");
+    }
+
+    /// <summary>
+    /// Render only dots that are within dirty regions for optimal performance
+    /// </summary>
+    private void RenderDotsInDirtyRegions(DrawingContext context)
+    {
+        int dotsRendered = 0;
+        var renderedDots = new HashSet<Dot>(); // Avoid rendering the same dot multiple times
+        
+        // Check each dirty region and render dots within it
+        for (int x = 0; x < REGIONS_X; x++)
+        {
+            for (int y = 0; y < REGIONS_Y; y++)
+            {
+                var region = _dirtyRegions[x, y];
+                if (!region.IsDirty) continue;
+                
+                // Find dots within this dirty region
+                foreach (var dot in ViewModel.Dots)
+                {
+                    if (renderedDots.Contains(dot)) continue; // Skip already rendered dots
+                    
+                    if (region.Contains(dot.VisualPosition))
+                    {
+                        RenderDot(context, dot);
+                        renderedDots.Add(dot);
+                        dotsRendered++;
+                    }
+                }
+            }
+        }
+        
+        // // Performance debugging - show how many dots we actually rendered
+        // if (dotsRendered > 0)
+        // {
+        //     Console.WriteLine($"Dirty region optimization: Rendered {dotsRendered} dots (out of {ViewModel.Dots.Count} visible)");
+        // }
+        // else
+        // {
+        //     Console.WriteLine("No dirty regions - skipped rendering entirely (dots remain visible from previous frame)");
+        // }
     }
 
     private void RenderDot(DrawingContext context, Dot dot)
