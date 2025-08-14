@@ -14,7 +14,7 @@
     <Design.DataContext>
         <vm:MainWindowViewModel/>
     </Design.DataContext>
-        <Grid ColumnDefinitions="*, 0.375*">
+        <Grid ColumnDefinitions="*, Auto">
 
             <Border Background="#161217"
                     CornerRadius="20"
@@ -23,12 +23,17 @@
                     Grid.Column="0">
                 <local:CanvasView x:Name="MainCanvasView" />
         </Border>
-            <Border Background="#1F1B24"
+            <ScrollViewer Background="#1F1B24"
                     CornerRadius="20"
                     ClipToBounds="True"
                     Margin="10"
                     Grid.Column="1">
-                <TextBlock Text="Settings go here" HorizontalAlignment="Center" />
-            </Border>
+                <StackPanel>
+                    <TextBlock Text="Dot Spacing" HorizontalAlignment="Center" Padding="5" Margin="0,10"/>
+                    <NumericUpDown Value="{Binding GridSettings.Spacing, Mode=TwoWay}" Minimum="1" Maximum="0,10"/>
+                    <TextBlock Text="Dot Size" HorizontalAlignment="Center" Padding="5" Margin="0,10"/>
+                    <NumericUpDown Value="{Binding GridSettings.DotSize, Mode=TwoWay}" Padding="5" Margin="0,10"/>
+                </StackPanel>
+            </ScrollViewer>
         </Grid>
     </Window>

@@ -14,7 +14,7 @@ namespace DSV.ViewModels;
 
 public class CanvasViewModel : ObservableObject
 {
-    public GridSettings GridSettings { get; set; } = new();
+    public GridSettings GridSettings => GridSettings.Instance;
 
     // public double FocusRadius { get; set; } = 50;
 
@@ -68,7 +68,7 @@ public class CanvasViewModel : ObservableObject
         
         // Add mouse-following circle with combined wave + magnification effects
         // TODO: Change circle radius here for effect area (currently 60)
-        var mouseCircle = new Circle { PositionX = 400, PositionY = 300, Radius = 60 };
+        var mouseCircle = new Circle { PositionX = 400, PositionY = 300, Radius = 20 };
         Circles.Add(mouseCircle);
         
         // Create composite effect: Wave + Magnification
@@ -92,7 +92,7 @@ public class CanvasViewModel : ObservableObject
         // Add magnification behavior (2x dot size)
         compositeEffect.Behaviors.Add(new MagnificationBehavior 
         { 
-            MagnificationMultiplier = 2.0 
+            MagnificationMultiplier = 5.0 
         });
         
         FieldEffectManager.AddFieldEffect(compositeEffect);

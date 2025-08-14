@@ -1,6 +1,9 @@
-﻿namespace DSV.ViewModels;
+﻿using DSV.Models;
+
+namespace DSV.ViewModels;
 
 public partial class MainWindowViewModel : ViewModelBase
 {
-    public string Greeting { get; } = "Welcome to Avalonia!";
+    public GridSettings  GridSettings => GridSettings.Instance;
+
 }

@@ -122,20 +122,22 @@ public class DotCanvas : Control
         if (ViewModel?.Dots == null)
             return;
 
-        // Optimized dirty region rendering
-        if (_regionsInitialized && !_forceFullRender)
-        {
-            // Only render dots in dirty regions for maximum performance
-            RenderDotsInDirtyRegions(context);
-        }
-        else
-        {
+        //TODO: fix Render Region issue
+        
+        // // Optimized dirty region rendering
+        // if (_regionsInitialized && !_forceFullRender)
+        // {
+        //     // Only render dots in dirty regions for maximum performance
+        //     RenderDotsInDirtyRegions(context);
+        // }
+        // else
+        // {
             // Fallback: render all visible dots (initial load or error recovery)
             foreach (var dot in ViewModel.Dots)
             {
                 RenderDot(context, dot);
             }
-        }
+        // }
 
         // Clean all dirty regions after render
         if (_regionsInitialized)
