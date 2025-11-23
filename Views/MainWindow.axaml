@@ -1,0 +1,137 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:DSV.Views"
+        xmlns:controls="clr-namespace:DSV.Controls"
+        xmlns:vm="using:DSV.ViewModels"
+        xmlns:models="using:DSV.Models"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+        x:Class="DSV.Views.MainWindow"
+        x:DataType="vm:MainWindowViewModel"
+        Title="DSV">
+
+        <!-- Icon="/Assets/avalonia-logo.ico" -->
+    <Design.DataContext>
+        <vm:MainWindowViewModel/>
+    </Design.DataContext>
+    <Grid>
+        <!-- Main Canvas Layer -->
+        <Border Background="{DynamicResource BackgroundBrush}">
+            <local:CanvasView x:Name="MainCanvasView" DataContext="{Binding CanvasViewModel}"/>
+        </Border>
+
+        <!-- Floating Controls Panel (Top Right) -->
+        <Border Background="{DynamicResource SurfaceBrush}"
+                CornerRadius="16"
+                Padding="20"
+                Margin="20"
+                HorizontalAlignment="Right"
+                VerticalAlignment="Top"
+                BoxShadow="0 4 10 0 #40000000"
+                Opacity="0.95">
+            <ContentControl Content="{Binding SelectedObject}">
+                <ContentControl.DataTemplates>
+                    <!-- Global Settings Template -->
+                    <DataTemplate DataType="{x:Type vm:CanvasViewModel}">
+                        <StackPanel Spacing="15" Width="200">
+                            <TextBlock Text="Global Settings" 
+                                     FontWeight="Bold" 
+                                     FontSize="18" 
+                                     Foreground="{DynamicResource TextBrush}"
+                                     HorizontalAlignment="Center"/>
+                            
+                            <Separator Height="1" Background="{DynamicResource AccentBrush}" Opacity="0.5"/>
+
+                            <!-- Dot Spacing Control -->
+                            <StackPanel Spacing="5">
+                                <TextBlock Text="Spacing" Foreground="{DynamicResource TextBrush}" FontSize="12"/>
+                                <NumericUpDown Value="{Binding GridSettings.Spacing, Mode=TwoWay}" 
+                                             Minimum="10" Maximum="100"
+                                             FormatString="0"/>
+                            </StackPanel>
+
+                            <!-- Dot Size Control -->
+                            <StackPanel Spacing="5">
+                                <TextBlock Text="Dot Size" Foreground="{DynamicResource TextBrush}" FontSize="12"/>
+                                <NumericUpDown Value="{Binding GridSettings.DotSize, Mode=TwoWay}" 
+                                             Minimum="1" Maximum="20"
+                                             FormatString="0"/>
+                            </StackPanel>
+
+                            <Separator Height="1" Background="{DynamicResource AccentBrush}" Opacity="0.5"/>
+
+                            <!-- Dynamic Mode Toggle -->
+                            <ToggleSwitch IsChecked="{Binding GridSettings.IsDynamic, Mode=TwoWay}" 
+                                         Content="Dynamic Mode"
+                                         OnContent="On"
+                                         OffContent="Off"
+                                         HorizontalAlignment="Stretch"/>
+                        </StackPanel>
+                    </DataTemplate>
+
+                    <!-- Node Settings Template -->
+                    <DataTemplate DataType="{x:Type models:Node}">
+                        <StackPanel Spacing="15" Width="200">
+                            <TextBlock Text="Node Settings" 
+                                     FontWeight="Bold" 
+                                     FontSize="18" 
+                                     Foreground="{DynamicResource TextBrush}"
+                                     HorizontalAlignment="Center"/>
+                            
+                            <Separator Height="1" Background="{DynamicResource AccentBrush}" Opacity="0.5"/>
+
+                            <!-- Title -->
+                            <StackPanel Spacing="5">
+                                <TextBlock Text="Title" Foreground="{DynamicResource TextBrush}" FontSize="12"/>
+                                <TextBox Text="{Binding Title}" Watermark="Node Title"/>
+                            </StackPanel>
+
+                            <!-- Shape -->
+                            <StackPanel Spacing="5">
+                                <TextBlock Text="Shape" Foreground="{DynamicResource TextBrush}" FontSize="12"/>
+                                <ComboBox SelectedIndex="{Binding Shape}" HorizontalAlignment="Stretch">
+                                    <ComboBoxItem>Rectangle</ComboBoxItem>
+                                    <ComboBoxItem>Circle</ComboBoxItem>
+                                    <ComboBoxItem>Triangle</ComboBoxItem>
+                                    <ComboBoxItem>Hexagon</ComboBoxItem>
+                                </ComboBox>
+                            </StackPanel>
+                            
+                            <!-- Color -->
+                             <StackPanel Spacing="5">
+                                <TextBlock Text="Color (Hex)" Foreground="{DynamicResource TextBrush}" FontSize="12"/>
+                                <TextBox Text="{Binding Color}" Watermark="#RRGGBB"/>
+                            </StackPanel>
+
+                            <!-- Position -->
+                            <Grid ColumnDefinitions="*, 10, *">
+                                <StackPanel Grid.Column="0" Spacing="5">
+                                    <TextBlock Text="X" Foreground="{DynamicResource TextBrush}" FontSize="12"/>
+                                    <NumericUpDown Value="{Binding PositionX}" FormatString="0"/>
+                                </StackPanel>
+                                <StackPanel Grid.Column="2" Spacing="5">
+                                    <TextBlock Text="Y" Foreground="{DynamicResource TextBrush}" FontSize="12"/>
+                                    <NumericUpDown Value="{Binding PositionY}" FormatString="0"/>
+                                </StackPanel>
+                            </Grid>
+                            
+                            <!-- Size -->
+                            <Grid ColumnDefinitions="*, 10, *">
+                                <StackPanel Grid.Column="0" Spacing="5">
+                                    <TextBlock Text="Width" Foreground="{DynamicResource TextBrush}" FontSize="12"/>
+                                    <NumericUpDown Value="{Binding Width}" FormatString="0"/>
+                                </StackPanel>
+                                <StackPanel Grid.Column="2" Spacing="5">
+                                    <TextBlock Text="Height" Foreground="{DynamicResource TextBrush}" FontSize="12"/>
+                                    <NumericUpDown Value="{Binding Height}" FormatString="0"/>
+                                </StackPanel>
+                            </Grid>
+
+                        </StackPanel>
+                    </DataTemplate>
+                </ContentControl.DataTemplates>
+            </ContentControl>
+        </Border>
+    </Grid>
+    </Window>

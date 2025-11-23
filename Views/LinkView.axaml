@@ -1,0 +1,12 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:models="using:DSV.Models"
+             x:Class="DSV.Views.LinkView"
+             x:DataType="models:Link">
+    <Canvas>
+        <Path Name="LinkPath"
+              Stroke="{DynamicResource AccentBrush}"
+              StrokeThickness="2"
+              Fill="Transparent"/>
+    </Canvas>
+</UserControl>

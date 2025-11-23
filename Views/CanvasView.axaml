@@ -1,0 +1,60 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:DSV.ViewModels"
+             xmlns:models="clr-namespace:DSV.Models"
+             xmlns:controls="clr-namespace:DSV.Controls"
+             xmlns:views="clr-namespace:DSV.Views"
+             x:Class="DSV.Views.CanvasView"
+             x:DataType="vm:CanvasViewModel">
+    <Design.DataContext>
+        <vm:CanvasViewModel/>
+    </Design.DataContext>
+
+    <Grid PointerPressed="OnPointerPressed">
+        <controls:DotCanvas Name="dotCanvas" ViewModel="{Binding}" />
+        <Panel Name="PanelLayer" Background="Transparent" PointerMoved="OnPointerMoved"/>
+        
+        <!-- Temporary Link Path (Drag visualization) -->
+        <Path Name="TempLinkPath"
+              Stroke="{DynamicResource AccentBrush}"
+              StrokeThickness="2"
+              StrokeDashArray="4,2"
+              IsHitTestVisible="False"/>
+        
+        <!-- Links Layer (Below Nodes) -->
+        <ItemsControl ItemsSource="{Binding Links}">
+            <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <Canvas/>
+                </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="models:Link">
+                    <views:LinkView DataContext="{Binding}"/>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
+
+        <!-- Nodes Layer -->
+        <ItemsControl ItemsSource="{Binding Nodes}">
+            <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <Canvas/>
+                </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            
+            <ItemsControl.Styles>
+                <Style Selector="ItemsControl > ContentPresenter" x:DataType="models:Node">
+                    <Setter Property="Canvas.Left" Value="{Binding PositionX}"/>
+                    <Setter Property="Canvas.Top" Value="{Binding PositionY}"/>
+                </Style>
+            </ItemsControl.Styles>
+            
+            <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="models:Node">
+                    <views:NodeView DataContext="{Binding}"/>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
+    </Grid>
+</UserControl>

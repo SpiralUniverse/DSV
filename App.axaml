@@ -1,0 +1,28 @@
+<Application xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="DSV.App"
+             xmlns:local="using:DSV"
+             RequestedThemeVariant="Dark">
+    <!-- "Default" ThemeVariant follows system theme variant. "Dark" or "Light" are other available options. -->
+
+    <Application.Resources>
+        <Color x:Key="BackgroundBase">#1E1E2E</Color>
+        <Color x:Key="SurfaceBase">#313244</Color>
+        <Color x:Key="TextPrimary">#CDD6F4</Color>
+        <Color x:Key="AccentColor">#CBA6F7</Color>
+        <Color x:Key="SuccessColor">#A6E3A1</Color>
+        
+        <SolidColorBrush x:Key="BackgroundBrush" Color="{StaticResource BackgroundBase}"/>
+        <SolidColorBrush x:Key="SurfaceBrush" Color="{StaticResource SurfaceBase}"/>
+        <SolidColorBrush x:Key="TextBrush" Color="{StaticResource TextPrimary}"/>
+        <SolidColorBrush x:Key="AccentBrush" Color="{StaticResource AccentColor}"/>
+    </Application.Resources>
+
+    <Application.DataTemplates>
+        <local:ViewLocator/>
+    </Application.DataTemplates>
+  
+    <Application.Styles>
+        <FluentTheme />
+    </Application.Styles>
+</Application>
